@@ -25,9 +25,9 @@ interface NavGroup {
 
 // ─── Top-level items (not grouped) ───────────────────────────────────────────
 const topNavItems: NavItem[] = [
-  { path: '/',          icon: Users,          label: 'Members'  },
-  { path: '/programs',  icon: LayoutDashboard, label: 'Programs' },
-  { path: '/analytics', icon: BarChart2,       label: 'Analytics'},
+  { path: '/',          icon: Users,           label: 'Members'   },
+  { path: '/programs',  icon: LayoutDashboard, label: 'Programs'  },
+  { path: '/analytics', icon: BarChart2,        label: 'Analytics' },
 ];
 
 // ─── Grouped items ────────────────────────────────────────────────────────────
@@ -37,14 +37,14 @@ const navGroups: NavGroup[] = [
     label: 'Reference Data',
     icon: Database,
     items: [
-      { path: '/orgs',         icon: Building2, label: 'Orgs'         },
-      { path: '/segments',     icon: Layers,    label: 'Segments'     },
-      { path: '/locations',    icon: MapPin,    label: 'Locations'    },
-      { path: '/products',     icon: Package,   label: 'Products'     },
-      { path: '/dma',          icon: Globe,     label: 'DMA'          },
-      { path: '/enums',        icon: List,      label: 'Enums'        },
-      { path: '/namedlists',   icon: FileText,  label: 'Named Lists'  },
-      { path: '/loyaltycards', icon: CreditCard,label: 'Loyalty Cards'},
+      { path: '/orgs',         icon: Building2,  label: 'Orgs'          },
+      { path: '/segments',     icon: Layers,     label: 'Segments'      },
+      { path: '/locations',    icon: MapPin,     label: 'Locations'     },
+      { path: '/products',     icon: Package,    label: 'Products'      },
+      { path: '/dma',          icon: Globe,      label: 'DMA'           },
+      { path: '/enums',        icon: List,       label: 'Enums'         },
+      { path: '/namedlists',   icon: FileText,   label: 'Named Lists'   },
+      { path: '/loyaltycards', icon: CreditCard, label: 'Loyalty Cards' },
     ],
   },
   {
@@ -52,13 +52,13 @@ const navGroups: NavGroup[] = [
     label: 'Settings',
     icon: Settings,
     items: [
-      { path: '/ussettings',   icon: User,      label: 'My Account'    },
-      { path: '/users',        icon: UserCheck, label: 'Users'         },
-      { path: '/acl',          icon: Shield,    label: 'Security Setup'},
-      { path: '/extensions',   icon: Zap,       label: 'Extensions'    },
-      { path: '/limits',       icon: Sliders,   label: 'Limits'        },
-      { path: '/divisions',    icon: Database,  label: 'Divisions'     },
-      { path: '/mcp-ui-config',icon: GitBranch, label: 'MCP UI Config' },
+      { path: '/ussettings',    icon: User,      label: 'My Account'    },
+      { path: '/users',         icon: UserCheck, label: 'Users'         },
+      { path: '/acl',           icon: Shield,    label: 'Security Setup'},
+      { path: '/extensions',    icon: Zap,       label: 'Extensions'    },
+      { path: '/limits',        icon: Sliders,   label: 'Limits'        },
+      { path: '/divisions',     icon: Database,  label: 'Divisions'     },
+      { path: '/mcp-ui-config', icon: GitBranch, label: 'MCP UI Config' },
     ],
   },
 ];
@@ -67,7 +67,6 @@ export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useAppStore();
   const location = useLocation();
 
-  // Track which groups are expanded; default open if a child is active
   const getInitialOpen = () => {
     const open: Record<string, boolean> = {};
     navGroups.forEach((g) => {
@@ -88,26 +87,46 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen bg-gray-900 text-white transition-all duration-300',
+        'fixed left-0 top-0 z-40 h-screen bg-slate-950 text-white transition-all duration-300 flex flex-col',
         sidebarOpen ? 'w-64' : 'w-16'
       )}
     >
-      {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-gray-700">
-        {sidebarOpen && (
-          <span className="text-lg font-bold text-white truncate">ReactorCX</span>
+      {/* Brand Header */}
+      <div
+        className={cn(
+          'flex h-16 items-center border-b border-slate-800 px-3 flex-shrink-0',
+          sidebarOpen ? 'justify-between' : 'justify-center'
         )}
-        <button
-          onClick={toggleSidebar}
-          className="p-1 rounded hover:bg-gray-700 transition-colors ml-auto"
-          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-        </button>
+      >
+        {sidebarOpen ? (
+          <>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-white text-sm font-bold leading-none">R</span>
+              </div>
+              <span className="text-sm font-semibold text-white truncate tracking-tight">ReactorCX</span>
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="p-1.5 rounded-md hover:bg-slate-800 transition-colors text-slate-400 hover:text-white flex-shrink-0"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={toggleSidebar}
+            title="Expand sidebar"
+            className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center hover:bg-blue-500 transition-colors"
+          >
+            <span className="text-white text-sm font-bold leading-none">R</span>
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="mt-4 px-2 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5 sidebar-scroll">
         {/* Top-level items */}
         {topNavItems.map(({ path, icon: Icon, label }) => (
           <NavLink
@@ -117,10 +136,10 @@ export function Sidebar() {
             title={!sidebarOpen ? label : undefined}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm',
+                'flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all duration-150 text-sm font-medium',
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
               )
             }
           >
@@ -129,6 +148,9 @@ export function Sidebar() {
           </NavLink>
         ))}
 
+        {/* Section divider */}
+        <div className="my-2 border-t border-slate-800/70" />
+
         {/* Grouped items */}
         {navGroups.map((group) => {
           const GroupIcon = group.icon;
@@ -136,16 +158,16 @@ export function Sidebar() {
           const isOpen = sidebarOpen && openGroups[group.key];
 
           return (
-            <div key={group.key}>
+            <div key={group.key} className="space-y-0.5">
               {/* Group header button */}
               <button
                 onClick={() => sidebarOpen && toggleGroup(group.key)}
                 title={!sidebarOpen ? group.label : undefined}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm',
+                  'w-full flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all duration-150 text-sm font-medium',
                   isActive
-                    ? 'text-blue-400 hover:bg-gray-700'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    ? 'text-blue-400 hover:bg-slate-800'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
                 )}
               >
                 <GroupIcon size={18} className="flex-shrink-0" />
@@ -153,16 +175,16 @@ export function Sidebar() {
                   <>
                     <span className="truncate flex-1 text-left">{group.label}</span>
                     {openGroups[group.key]
-                      ? <ChevronUp size={14} className="flex-shrink-0" />
-                      : <ChevronDown size={14} className="flex-shrink-0" />
+                      ? <ChevronUp size={14} className="flex-shrink-0 text-slate-500" />
+                      : <ChevronDown size={14} className="flex-shrink-0 text-slate-500" />
                     }
                   </>
                 )}
               </button>
 
-              {/* Sub-items (only when sidebar is open and group is expanded) */}
+              {/* Sub-items */}
               {isOpen && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                <div className="ml-3 pl-3 border-l border-slate-800 space-y-0.5">
                   {group.items.map(({ path, icon: Icon, label }) => (
                     <NavLink
                       key={path}
@@ -170,14 +192,14 @@ export function Sidebar() {
                       title={label}
                       className={({ isActive: active }) =>
                         cn(
-                          'flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors text-sm',
+                          'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all duration-150 text-sm',
                           active
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
                         )
                       }
                     >
-                      <Icon size={16} className="flex-shrink-0" />
+                      <Icon size={15} className="flex-shrink-0" />
                       <span className="truncate">{label}</span>
                     </NavLink>
                   ))}
@@ -187,6 +209,19 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Collapse toggle at bottom when collapsed */}
+      {!sidebarOpen && (
+        <div className="flex-shrink-0 px-2 pb-3">
+          <button
+            onClick={toggleSidebar}
+            className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
+            title="Expand sidebar"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

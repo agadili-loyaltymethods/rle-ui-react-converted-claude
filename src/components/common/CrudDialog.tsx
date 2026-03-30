@@ -47,6 +47,9 @@ interface CrudDialogProps {
   submitLabel?: string;
 }
 
+const baseFieldClass =
+  'flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-colors';
+
 export function CrudDialog({
   open,
   onOpenChange,
@@ -67,7 +70,6 @@ export function CrudDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset form whenever the dialog opens
   useEffect(() => {
     if (open) {
       setValues(buildEmpty());
@@ -109,7 +111,7 @@ export function CrudDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} noValidate autoComplete="off">
@@ -117,16 +119,18 @@ export function CrudDialog({
             {error && <ErrorMessage message={error} />}
 
             {fields.map((field) => (
-              <div key={field.key} className="space-y-1">
-                <Label htmlFor={field.key}>
+              <div key={field.key} className="space-y-1.5">
+                <Label htmlFor={field.key} className="text-sm font-medium text-slate-700">
                   {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.required && (
+                    <span className="text-red-500 ml-0.5">*</span>
+                  )}
                 </Label>
 
                 {field.type === 'textarea' ? (
                   <textarea
                     id={field.key}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`${baseFieldClass} min-h-[88px] resize-none`}
                     placeholder={field.placeholder}
                     autoComplete="off"
                     value={values[field.key] ?? ''}
@@ -135,7 +139,7 @@ export function CrudDialog({
                 ) : field.type === 'select' ? (
                   <select
                     id={field.key}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`${baseFieldClass} h-9 cursor-pointer appearance-none`}
                     value={values[field.key] ?? ''}
                     onChange={(e) => set(field.key, e.target.value)}
                   >
@@ -153,22 +157,24 @@ export function CrudDialog({
                     placeholder={field.placeholder}
                     value={values[field.key] ?? ''}
                     onChange={(e) => set(field.key, e.target.value)}
+                    className="h-9"
                   />
                 )}
               </div>
             ))}
           </div>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-5 gap-2">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" size="sm" disabled={loading}>
               {loading ? 'Saving…' : submitLabel}
             </Button>
           </DialogFooter>

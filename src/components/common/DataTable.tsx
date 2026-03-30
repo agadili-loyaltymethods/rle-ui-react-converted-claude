@@ -1,9 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ChevronUp, ChevronDown, ChevronsUpDown,
+  Search, ChevronLeft, ChevronRight, X,
+} from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table';
+import {
+  Table, TableHeader, TableBody,
+  TableRow, TableHead, TableCell,
+} from '../ui/table';
 
 export interface Column<T> {
   key: keyof T | string;
@@ -30,7 +36,6 @@ interface DataTableProps<T> {
 
 type SortOrder = 'asc' | 'desc' | null;
 
-/** Render a cell value as a string safe for title/tooltip */
 function toPlainText(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') return JSON.stringify(value);
@@ -88,32 +93,45 @@ export function DataTable<T extends Record<string, unknown>>({
     }
   };
 
+  const handleSearchClear = () => {
+    setSearch('');
+    setPage(1);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {searchable && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
           <Input
-            className="pl-10"
+            className="pl-9 pr-8 h-9 text-sm bg-white border-slate-200 focus:border-primary"
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
+          {search && (
+            <button
+              onClick={handleSearchClear}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       )}
 
-      {/* Horizontal scroll wrapper */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table className="min-w-max">
-          <TableHeader>
-            <TableRow>
+      {/* Table container — overflow-x for horizontal scroll; sticky header works via main scroll */}
+      <div className="rounded-xl border border-slate-200 overflow-x-auto bg-white shadow-sm">
+        <Table className="min-w-max w-full">
+          <TableHeader className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200">
+            <TableRow className="hover:bg-transparent border-0">
               {columns.map((col) => (
                 <TableHead
                   key={String(col.key)}
                   style={{ minWidth: col.minWidth ?? '8rem' }}
                   className={cn(
-                    'whitespace-nowrap',
-                    col.sortable && 'cursor-pointer select-none',
+                    'whitespace-nowrap bg-transparent',
+                    col.sortable && 'cursor-pointer select-none hover:text-slate-700',
                     col.className
                   )}
                   onClick={() => col.sortable && handleSort(String(col.key))}
@@ -123,14 +141,18 @@ export function DataTable<T extends Record<string, unknown>>({
                     {col.sortable && (
                       sortKey === String(col.key)
                         ? sortOrder === 'asc'
-                          ? <ChevronUp size={14} />
-                          : <ChevronDown size={14} />
-                        : <ChevronsUpDown size={14} className="opacity-40" />
+                          ? <ChevronUp size={13} className="text-blue-500" />
+                          : <ChevronDown size={13} className="text-blue-500" />
+                        : <ChevronsUpDown size={13} className="opacity-30" />
                     )}
                   </div>
                 </TableHead>
               ))}
-              {actions && <TableHead style={{ minWidth: '6rem' }}>Actions</TableHead>}
+              {actions && (
+                <TableHead style={{ minWidth: '7rem' }} className="text-right">
+                  Actions
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -138,25 +160,42 @@ export function DataTable<T extends Record<string, unknown>>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="text-center py-10 text-gray-400"
+                  className="text-center py-16 text-slate-400"
                 >
-                  Loading...
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                    <span className="text-sm">Loading…</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : paged.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="text-center py-10 text-gray-400"
+                  className="text-center py-16 text-slate-400"
                 >
-                  {emptyMessage}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-sm font-medium">{emptyMessage}</span>
+                    {search && (
+                      <button
+                        onClick={handleSearchClear}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               paged.map((row, idx) => (
                 <TableRow
                   key={String(row[rowKey as string] ?? idx)}
-                  className={cn(onRowClick && 'cursor-pointer')}
+                  className={cn(
+                    'border-b border-slate-100 transition-colors',
+                    idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white',
+                    onRowClick && 'cursor-pointer hover:bg-blue-50/60'
+                  )}
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col) => {
@@ -164,9 +203,6 @@ export function DataTable<T extends Record<string, unknown>>({
                     const rendered = col.render
                       ? col.render(rawValue, row)
                       : String(rawValue ?? '');
-
-                    // For rendered JSX, we can't easily extract plain text for title;
-                    // use raw value string as the tooltip source.
                     const titleText = toPlainText(rawValue);
 
                     return (
@@ -175,11 +211,7 @@ export function DataTable<T extends Record<string, unknown>>({
                         style={{ minWidth: col.minWidth ?? '8rem' }}
                         className={cn('max-w-[16rem]', col.className)}
                       >
-                        {/* Ellipsis wrapper with tooltip */}
-                        <div
-                          className="truncate"
-                          title={titleText || undefined}
-                        >
+                        <div className="truncate" title={titleText || undefined}>
                           {rendered}
                         </div>
                       </TableCell>
@@ -187,7 +219,8 @@ export function DataTable<T extends Record<string, unknown>>({
                   })}
                   {actions && (
                     <TableCell
-                      style={{ minWidth: '6rem' }}
+                      style={{ minWidth: '7rem' }}
+                      className="text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {actions(row)}
@@ -200,17 +233,37 @@ export function DataTable<T extends Record<string, unknown>>({
         </Table>
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
+        <div className="flex items-center justify-between text-sm text-slate-500 pt-1">
+          <span className="text-xs">
+            Showing{' '}
+            <span className="font-medium text-slate-700">
+              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)}
+            </span>{' '}
+            of{' '}
+            <span className="font-medium text-slate-700">{sorted.length}</span>
           </span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+              className="h-8 w-8 p-0"
+            >
               <ChevronLeft size={14} />
             </Button>
-            <span>Page {page} of {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+            <span className="px-2 text-xs font-medium text-slate-600">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage(page + 1)}
+              className="h-8 w-8 p-0"
+            >
               <ChevronRight size={14} />
             </Button>
           </div>

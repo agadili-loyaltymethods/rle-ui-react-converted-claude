@@ -27,22 +27,22 @@ export function RouteError() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
       <div className="max-w-md w-full text-center px-6">
-        <div className="flex justify-center mb-4">
-          <div className="rounded-full bg-red-100 p-4">
-            <AlertTriangle className="h-10 w-10 text-red-600" />
+        <div className="flex justify-center mb-5">
+          <div className="rounded-2xl bg-red-50 border border-red-100 p-4">
+            <AlertTriangle className="h-9 w-9 text-red-500" />
           </div>
         </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">{status}</h1>
-        <h2 className="text-xl font-semibold text-gray-700 mb-3">{title}</h2>
-        <p className="text-gray-500 mb-8">{message}</p>
+        <h1 className="text-5xl font-bold text-slate-900 mb-2 tracking-tight">{status}</h1>
+        <h2 className="text-lg font-semibold text-slate-700 mb-2">{title}</h2>
+        <p className="text-sm text-slate-500 mb-8 leading-relaxed">{message}</p>
         <div className="flex justify-center gap-3">
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft size={16} className="mr-2" /> Go Back
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft size={15} className="mr-1.5" /> Go Back
           </Button>
-          <Button onClick={() => navigate('/')}>
-            <Home size={16} className="mr-2" /> Home
+          <Button size="sm" onClick={() => navigate('/')}>
+            <Home size={15} className="mr-1.5" /> Home
           </Button>
         </div>
       </div>
