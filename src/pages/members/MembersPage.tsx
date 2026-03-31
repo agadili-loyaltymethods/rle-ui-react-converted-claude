@@ -15,7 +15,8 @@ import { membersApi, Member, MemberSearchParams } from '../../api/resources/memb
 import { uiFlags } from '../../config/app.config';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const PAGE_LIMIT = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const DEFAULT_PAGE_LIMIT = 10;
 
 // Populate / select matching AngularJS queryData exactly
 const POPULATE_PARAM = JSON.stringify([
@@ -211,6 +212,7 @@ export function MembersPage() {
   // Server-side pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [pageLimit, setPageLimit] = useState(DEFAULT_PAGE_LIMIT);
 
   // Extension schema columns (fetched once on mount)
   const [extSchema, setExtSchema] = useState<Record<string, unknown> | null>(null);
@@ -261,10 +263,10 @@ export function MembersPage() {
 
   // ─── Core fetch function ────────────────────────────────────────────────────
   const fetchMembers = useCallback(
-    async (params: MemberSearchParams, pageNum: number) => {
+    async (params: MemberSearchParams, pageNum: number, limit: number) => {
       setLoading(true);
       setError(null);
-      const skip = (pageNum - 1) * PAGE_LIMIT;
+      const skip = (pageNum - 1) * limit;
       try {
         // Bundle search fields into query JSON — matches AngularJS queryData format
         const queryFilter: Record<string, unknown> = {};
@@ -275,7 +277,7 @@ export function MembersPage() {
         if (params.loyaltyId) queryFilter.loyaltyId = params.loyaltyId;
 
         const apiParams: MemberSearchParams = {
-          limit: PAGE_LIMIT,
+          limit,
           skip,
           locale: 'en',
           populate: POPULATE_PARAM,
@@ -289,7 +291,7 @@ export function MembersPage() {
         const res = await membersApi.search(apiParams);
         const rows = Array.isArray(res.data) ? res.data : ([res.data].filter(Boolean) as Member[]);
         setMembers(rows);
-        setHasMore(rows.length === PAGE_LIMIT);
+        setHasMore(rows.length === limit);
       } catch (err: unknown) {
         setError((err as { message?: string })?.message || 'Load failed');
       } finally {
@@ -301,25 +303,31 @@ export function MembersPage() {
 
   // ─── Auto-load on mount (default members list) ─────────────────────────────
   useEffect(() => {
-    fetchMembers({}, 1);
-  }, [fetchMembers]);
+    fetchMembers({}, 1, pageLimit);
+  }, [fetchMembers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Search handler ─────────────────────────────────────────────────────────
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
     setPage(1);
-    fetchMembers(searchParams, 1);
+    fetchMembers(searchParams, 1, pageLimit);
   };
 
   const handleClear = () => {
     setSearchParams({});
     setPage(1);
-    fetchMembers({}, 1);
+    fetchMembers({}, 1, pageLimit);
   };
 
   const handlePage = (next: number) => {
     setPage(next);
-    fetchMembers(searchParams, next);
+    fetchMembers(searchParams, next, pageLimit);
+  };
+
+  const handlePageLimitChange = (newLimit: number) => {
+    setPageLimit(newLimit);
+    setPage(1);
+    fetchMembers(searchParams, 1, newLimit);
   };
 
   const handleAddSuccess = (created: unknown) => {
@@ -420,7 +428,8 @@ export function MembersPage() {
               data={members as unknown as Record<string, unknown>[]}
               columns={allColumns}
               searchable={false}
-              pageSize={PAGE_LIMIT}
+              showRowsPerPage={false}
+              pageSize={pageLimit}
               onRowClick={(row) => {
                 const id = (row as Member)._id || (row as Member).id;
                 if (id) navigate(`/details/${id}`);
@@ -430,9 +439,21 @@ export function MembersPage() {
           </div>
 
           {/* ─── Server-side pagination ──────────────────────────────────── */}
-          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-            <span>Page {page}</span>
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-600 flex-wrap gap-3">
             <div className="flex items-center gap-2">
+              <span className="whitespace-nowrap">Rows per page:</span>
+              <select
+                className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                value={pageLimit}
+                onChange={(e) => handlePageLimitChange(Number(e.target.value))}
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 text-xs">Page {page}</span>
               <Button
                 variant="outline"
                 size="sm"

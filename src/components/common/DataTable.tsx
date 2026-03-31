@@ -19,14 +19,21 @@ export interface Column<T> {
   className?: string;
   /** Minimum column width (default: '8rem') */
   minWidth?: string;
+  /** Hide this column from the UI (data still exists for row key / callbacks) */
+  hidden?: boolean;
 }
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   searchable?: boolean;
   searchPlaceholder?: string;
+  /** Default rows per page (default: 10). If showRowsPerPage is true, user can change it. */
   pageSize?: number;
+  /** Show rows-per-page dropdown (default: true) */
+  showRowsPerPage?: boolean;
   loading?: boolean;
   onRowClick?: (row: T) => void;
   rowKey?: keyof T;
@@ -47,7 +54,8 @@ export function DataTable<T extends Record<string, unknown>>({
   columns,
   searchable = true,
   searchPlaceholder = 'Search...',
-  pageSize = 20,
+  pageSize = 10,
+  showRowsPerPage = true,
   loading = false,
   onRowClick,
   rowKey = 'id' as keyof T,
@@ -58,6 +66,10 @@ export function DataTable<T extends Record<string, unknown>>({
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
+
+  // Filter out hidden columns for rendering
+  const visibleColumns = columns.filter((c) => !c.hidden);
 
   const filtered = useMemo(() => {
     if (!search) return data;
@@ -78,8 +90,8 @@ export function DataTable<T extends Record<string, unknown>>({
     });
   }, [filtered, sortKey, sortOrder]);
 
-  const totalPages = Math.ceil(sorted.length / pageSize);
-  const paged = sorted.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(sorted.length / rowsPerPage);
+  const paged = sorted.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   const handleSort = (key: string) => {
     if (sortKey !== key) {
@@ -100,22 +112,44 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div className="space-y-3">
-      {searchable && (
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-          <Input
-            className="pl-9 pr-8 h-9 text-sm bg-white border-slate-200 focus:border-primary"
-            placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          />
-          {search && (
-            <button
-              onClick={handleSearchClear}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X size={13} />
-            </button>
+      {/* Search + rows-per-page toolbar */}
+      {(searchable || showRowsPerPage) && (
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {searchable && (
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <Input
+                className="pl-9 pr-8 h-9 text-sm bg-white border-slate-200 focus:border-primary"
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+              {search && (
+                <button
+                  onClick={handleSearchClear}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          )}
+          {showRowsPerPage && (
+            <div className="flex items-center gap-2 text-sm text-slate-600 flex-shrink-0">
+              <span className="whitespace-nowrap">Rows per page:</span>
+              <select
+                className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
       )}
@@ -125,7 +159,7 @@ export function DataTable<T extends Record<string, unknown>>({
         <Table className="min-w-max w-full">
           <TableHeader className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200">
             <TableRow className="hover:bg-transparent border-0">
-              {columns.map((col) => (
+              {visibleColumns.map((col) => (
                 <TableHead
                   key={String(col.key)}
                   style={{ minWidth: col.minWidth ?? '8rem' }}
@@ -159,7 +193,7 @@ export function DataTable<T extends Record<string, unknown>>({
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + (actions ? 1 : 0)}
+                  colSpan={visibleColumns.length + (actions ? 1 : 0)}
                   className="text-center py-16 text-slate-400"
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -171,7 +205,7 @@ export function DataTable<T extends Record<string, unknown>>({
             ) : paged.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + (actions ? 1 : 0)}
+                  colSpan={visibleColumns.length + (actions ? 1 : 0)}
                   className="text-center py-16 text-slate-400"
                 >
                   <div className="flex flex-col items-center gap-1.5">
@@ -198,7 +232,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   )}
                   onClick={() => onRowClick?.(row)}
                 >
-                  {columns.map((col) => {
+                  {visibleColumns.map((col) => {
                     const rawValue = row[String(col.key)];
                     const rendered = col.render
                       ? col.render(rawValue, row)
@@ -239,7 +273,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <span className="text-xs">
             Showing{' '}
             <span className="font-medium text-slate-700">
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)}
+              {(page - 1) * rowsPerPage + 1}–{Math.min(page * rowsPerPage, sorted.length)}
             </span>{' '}
             of{' '}
             <span className="font-medium text-slate-700">{sorted.length}</span>

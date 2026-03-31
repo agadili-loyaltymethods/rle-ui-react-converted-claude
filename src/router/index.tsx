@@ -7,7 +7,6 @@ import { ProtectedRoute } from '../components/common/ProtectedRoute';
 import { LoginPage } from '../pages/login/LoginPage';
 import { MembersPage } from '../pages/members/MembersPage';
 import { MemberDetailsPage } from '../pages/member-details/MemberDetailsPage';
-import { MemberTabPlaceholder } from '../pages/member-details/MemberTabPlaceholder';
 import { ProgramsPage } from '../pages/programs/ProgramsPage';
 
 // Lazy-loaded pages
@@ -102,10 +101,6 @@ export const router = createBrowserRouter([
         path: 'details/:id',
         element: <MemberDetailsPage />,
         errorElement: <RouteError />,
-        children: [
-          { index: true, element: <Navigate to="activities" replace /> },
-          { path: ':tab', element: <MemberTabPlaceholder /> },
-        ],
       },
 
       // Programs + nested sub-sections

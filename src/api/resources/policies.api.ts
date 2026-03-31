@@ -14,5 +14,5 @@ export const tierPoliciesApi = crudResource('/tierpolicies');
 export const streakPoliciesApi = crudResource('/streakpolicies');
 export const aggregatePoliciesApi = crudResource('/aggregatepolicies');
 export const partnersApi = crudResource('/partners');
-export const promosApi = crudResource('/promos');
-export const promoCodeDefsApi = crudResource('/promocodesdef');
+// Promo Policies: AngularJS uses /rules filtered by isPromoFolder — handled in PoliciesPage, not here
+export const promoCodeDefsApi = crudResource('/promocodedefs');

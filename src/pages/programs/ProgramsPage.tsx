@@ -41,7 +41,8 @@ const programFields: FieldDef[] = [
 ];
 
 const columns: Column<Record<string, unknown>>[] = [
-  { key: 'id', header: 'ID', sortable: true },
+  { key: 'id',   header: 'ID',   hidden: true }, // stored for navigation; not shown
+  { key: '_id',  header: '_id',  hidden: true }, // MongoDB _id fallback; not shown
   { key: 'name', header: 'Program Name', sortable: true },
   {
     key: 'status',
@@ -112,32 +113,41 @@ export function ProgramsPage() {
       <DataTable
         data={programs as unknown as Record<string, unknown>[]}
         columns={columns}
-        onRowClick={(row) => navigate(`/programs/${row['id']}/policies`)}
-        actions={(row) => (
-          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/programs/${row['id']}/rules`)}
-            >
-              Rules
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/programs/${row['id']}/flow`)}
-            >
-              Flow
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteTarget(row as unknown as Program)}
-            >
-              Delete
-            </Button>
-          </div>
-        )}
+        onRowClick={(row) => {
+          // Safely resolve the program ID — the API may return 'id' or 'programId'
+          const id = (row['id'] ?? row['_id'] ?? row['programId']) as string | undefined;
+          if (id) navigate(`/programs/${id}/policies`);
+        }}
+        actions={(row) => {
+          const id = (row['id'] ?? row['_id'] ?? row['programId']) as string | undefined;
+          return (
+            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!id}
+                onClick={() => id && navigate(`/programs/${id}/rules`)}
+              >
+                Rules
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!id}
+                onClick={() => id && navigate(`/programs/${id}/flow`)}
+              >
+                Flow
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteTarget(row as unknown as Program)}
+              >
+                Delete
+              </Button>
+            </div>
+          );
+        }}
       />
 
       {/* ─── New Program Dialog ───────────────────────────────────────────── */}
